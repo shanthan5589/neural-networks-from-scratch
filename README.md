@@ -48,15 +48,16 @@ Every line of the following is written from scratch:
 
 ## Results
 
-| Model | Test Accuracy |
-|---|---|
-| Logistic Regression | 70% |
-| Shallow Neural Network | TBD |
-| Deep Neural Network | TBD |
+| Model | Train Accuracy | Test Accuracy |
+|---|---|---|
+| Logistic Regression | 99.04% | 70.00% |
+| Shallow Neural Network | 94.26% | 62.00% |
+| Deep Neural Network | 65.55% | 34.00% |
+---
 
 Dataset: Cat vs Non-Cat (209 training examples, 50 test examples, 64×64 RGB images)
 
----
+
 
 ## Key Concepts Understood
 
