@@ -106,10 +106,10 @@ Typical: $\beta_1 = 0.9$, $\beta_2 = 0.999$, $\epsilon = 10^{-8}$
 
 ## Learning Rate Decay
 
-$$\alpha = \frac{1}{1 + \text{decay\_rate} \times \text{epoch\_num}} \cdot \alpha_0$$
+$$\alpha = \frac{1}{1 + \text{decay rate} \times \text{epoch}} \cdot \alpha_0$$
 
 Other forms:
 
-$$\alpha = 0.95^{\text{epoch\_num}} \cdot \alpha_0 \quad \text{(exponential decay)}$$
+$$\alpha = 0.95^{\text{epoch}} \cdot \alpha_0 \quad \text{(exponential decay)}$$
 
-$$\alpha = \frac{k}{\sqrt{\text{epoch\_num}}} \cdot \alpha_0$$
+$$\alpha = \frac{k}{\sqrt{\text{epoch}}} \cdot \alpha_0$$
