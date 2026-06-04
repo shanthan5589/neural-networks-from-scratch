@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neural Networks from Scratch</title>
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$']],
+        displayMath: [['$$', '$$']],
+        processEscapes: true
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 16px;
+      line-height: 1.75;
+      color: #222;
+      background: #fff;
+      display: flex;
+    }
+
+    #sidebar {
+      width: 210px;
+      min-width: 210px;
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      overflow-y: auto;
+      border-right: 1px solid #ccc;
+      padding: 28px 16px;
+      background: #f8f8f8;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 13.5px;
+    }
+
+    #sidebar .sidebar-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #888;
+      margin-bottom: 14px;
+      font-weight: 600;
+    }
+
+    #sidebar nav ul { list-style: none; }
+    #sidebar nav > ul > li { margin-bottom: 4px; }
+
+    #sidebar nav a {
+      color: #333;
+      text-decoration: none;
+      display: block;
+      padding: 3px 6px;
+      border-radius: 2px;
+    }
+
+    #sidebar nav a:hover { text-decoration: underline; color: #000; }
+    #sidebar nav a.active { font-weight: 700; color: #000; }
+
+    .nav-group-label {
+      display: block;
+      padding: 3px 6px;
+      color: #555;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    .nav-sublist { padding-left: 14px; }
+    .nav-sublist li { margin-bottom: 2px; }
+
+    #main {
+      max-width: 800px;
+      width: 100%;
+      margin-left: auto;
+      margin-right: auto;
+      padding: 44px 52px;
+      overflow-x: hidden;
+    }
+
+    section { margin-bottom: 64px; }
+    section + section {
+      border-top: 1px solid #ddd;
+      padding-top: 44px;
+    }
+
+    h1 { font-size: 1.75em; margin-bottom: 14px; color: #111; }
+    h2 { font-size: 1.3em; margin-top: 30px; margin-bottom: 10px; color: #111; }
+    h3 { font-size: 1.1em; margin-top: 22px; margin-bottom: 8px; color: #222; }
+    h4 { font-size: 1em; margin-top: 16px; margin-bottom: 6px; font-style: italic; color: #333; }
+
+    p { margin-bottom: 12px; }
+
+    ul, ol { margin: 0 0 12px 24px; }
+    li { margin-bottom: 3px; }
+
+    code {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.87em;
+      background: #f0f0f0;
+      padding: 1px 4px;
+      border-radius: 2px;
+    }
+
+    pre {
+      background: #f5f5f5;
+      border: 1px solid #ddd;
+      padding: 13px 16px;
+      overflow-x: auto;
+      margin: 12px 0;
+      line-height: 1.5;
+    }
+
+    pre code {
+      background: none;
+      padding: 0;
+      border-radius: 0;
+      font-size: 0.84em;
+    }
+
+    table {
+      border-collapse: collapse;
+      margin: 14px 0;
+      font-size: 0.9em;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    th, td { border: 1px solid #bbb; padding: 5px 11px; text-align: left; }
+    th { background: #eeeeee; font-weight: 600; }
+
+    hr { border: none; border-top: 1px solid #ddd; margin: 22px 0; }
+
+    strong { font-weight: bold; }
+    em { font-style: italic; }
+    a { color: #1a0dab; }
+
+    .notebook-note {
+      background: #fffbea;
+      border: 1px solid #d8be3a;
+      padding: 7px 13px;
+      font-size: 0.88em;
+      margin: 10px 0 16px 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    .section-tag {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 0.82em;
+      color: #777;
+      margin-bottom: 14px;
+    }
+
+    /* Sidebar collapse */
+    #sidebar {
+      transition: width 0.2s ease, min-width 0.2s ease, padding 0.2s ease;
+      overflow: hidden;
+    }
+
+    #sidebar.collapsed {
+      width: 0;
+      min-width: 0;
+      padding: 0;
+      border-right: none;
+    }
+
+    #toggle-btn {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 100;
+      background: #f8f8f8;
+      border: 1px solid #ccc;
+      padding: 3px 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: #555;
+      border-radius: 2px;
+      line-height: 1.5;
+    }
+
+    #toggle-btn:hover { background: #eee; }
+
+  </style>
+</head>
+<body>
+
+<button id="toggle-btn" title="Toggle sidebar">&#9776;</button>
+
+<aside id="sidebar">
+  <div class="sidebar-title" style="margin-top: 28px;">Contents</div>
+  <nav>
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#logistic_regression">01 Logistic Regression</a></li>
+      <li><a href="#shallow_nn">02 Shallow Neural Network</a></li>
+      <li><a href="#deep_nn">03 Deep Neural Network</a></li>
+      <li>
+        <span class="nav-group-label">Regularization</span>
+        <ul class="nav-sublist">
+          <li><a href="#regularization_l2">L2</a></li>
+          <li><a href="#regularization_dropout">Dropout</a></li>
+        </ul>
+      </li>
+      <li><a href="#optimization">Optimization</a></li>
+      <li><a href="#batch_norm">Batch Normalization</a></li>
+    </ul>
+  </nav>
+</aside>
+
+<main id="main">
+
+<!-- ═══════════════════════════════════════════ OVERVIEW -->
+<section id="overview">
+  <h1>Neural Networks from Scratch</h1>
+  <p>Implementing neural networks using only NumPy — no PyTorch, no TensorFlow, no abstractions.</p>
+  <p>The goal of this repo is not to achieve state-of-the-art results. It is to understand exactly what happens inside a neural network — every matrix multiplication, every derivative, every weight update — by building it from the ground up.</p>
+
+  <hr>
+
+  <h2>Why from Scratch?</h2>
+  <p>Using a framework like PyTorch, you call <code>loss.backward()</code> and gradients appear. This repo is about understanding what <code>loss.backward()</code> actually does — deriving and implementing every gradient by hand using the chain rule.</p>
+
+  <hr>
+
+  <h2>Progression</h2>
+  <p>The three implementations follow a deliberate progression, each motivated by the failure of the previous one:</p>
+
+  <h3>1. Logistic Regression</h3>
+  <p>A single neuron. The simplest possible classifier.</p>
+  <p>Learns that a single linear decision boundary is not enough for real-world image data. Achieves 70% test accuracy on the Cat vs Non-Cat dataset — not because the implementation is wrong, but because the model itself is fundamentally limited.</p>
+
+  <h3>2. Shallow Neural Network</h3>
+  <p>One hidden layer with tanh activation, sigmoid output.</p>
+  <p>Adds non-linearity — the network can now learn curved decision boundaries. Understands why activation functions exist, why zero-initialization fails, and why tanh is preferred over sigmoid for hidden layers.</p>
+
+  <h3>3. Deep Neural Network</h3>
+  <p>L hidden layers, generalized with for loops.</p>
+  <p>Implements the full forward and backward pass for an arbitrary number of layers. Understands vanishing gradients, why deep networks need careful initialization (<code>* 0.01</code>), and why even a deep fully connected network cannot solve image classification properly without spatial awareness.</p>
+
+  <hr>
+
+  <h2>What's Actually Implemented</h2>
+  <p>Every line of the following is written from scratch:</p>
+  <ul>
+    <li>Sigmoid, tanh activation functions and their derivatives</li>
+    <li>Binary cross-entropy loss</li>
+    <li>Forward propagation for L layers</li>
+    <li>Backpropagation — full chain rule derivation layer by layer</li>
+    <li>Gradient descent parameter updates</li>
+    <li>Weight initialization strategies</li>
+  </ul>
+
+  <hr>
+
+  <h2>Results</h2>
+  <table>
+    <thead><tr><th>Model</th><th>Train Accuracy</th><th>Test Accuracy</th></tr></thead>
+    <tbody>
+      <tr><td>Logistic Regression</td><td>99.04%</td><td>70.00%</td></tr>
+      <tr><td>Shallow Neural Network</td><td>94.26%</td><td>62.00%</td></tr>
+      <tr><td>Deep Neural Network</td><td>65.55%</td><td>34.00%</td></tr>
+    </tbody>
+  </table>
+  <p>Dataset: Cat vs Non-Cat (209 training examples, 50 test examples, 64×64 RGB images)</p>
+
+  <hr>
+
+  <h2>Key Concepts Understood</h2>
+
+  <p><strong>Why dZ = A − Y at the output layer</strong><br>The chain rule applied to sigmoid + cross-entropy at the output layer simplifies to this. It is not a definition — it is a derived result specific to the output layer. For hidden layers, dZ is computed differently: <code>dZ[l] = W[l+1].T · dZ[l+1] * g'(Z[l])</code> — the error signal flows back from the next layer through its weights, scaled by the local activation derivative.</p>
+
+  <p><strong>Why hidden layers need tanh, not sigmoid</strong><br>Sigmoid outputs values between 0 and 1 — always positive. This causes zig-zag gradient updates. Tanh outputs between −1 and 1, is zero-centered, and converges faster.</p>
+
+  <p><strong>Why weights cannot be initialized to zero</strong><br>Zero initialization makes every neuron in a layer identical — they compute the same thing, receive the same gradients, and never differentiate. Random initialization breaks this symmetry.</p>
+
+  <p><strong>Why deep FC networks fail on images</strong><br>Flattening an image destroys spatial structure. More layers add representational power but cannot recover positional information that was lost. The solution is convolutional layers — covered in the next stage of this project.</p>
+
+  <p><strong>The vanishing gradient problem</strong><br>In deep networks, gradients are multiplied layer by layer during backprop. Sigmoid saturates near 0 and 1, producing near-zero derivatives. Multiplied across many layers, the gradient reaching early layers approaches zero — those layers stop learning.</p>
+</section>
+
+<!-- ═══════════════════════════════════════════ LOGISTIC REGRESSION -->
+<section id="logistic_regression">
+  <h1>01 — Logistic Regression from Scratch</h1>
+  <div class="notebook-note">Notebook: <code>01_logistic_regression/logistic_regression.ipynb</code> — open with Jupyter.</div>
+  <p>A binary classifier built using only NumPy — no frameworks. Applied to the Cat vs Non-Cat dataset.</p>
+
+  <hr>
+
+  <h2>What is Logistic Regression?</h2>
+  <p>Logistic regression is the simplest neural network possible — a single neuron. It takes an input, computes a weighted sum, passes it through a sigmoid activation, and outputs a probability between 0 and 1.</p>
+  <p>It answers one question: <strong>given this input, what is the probability it belongs to class 1?</strong></p>
+
+  <hr>
+
+  <h2>Architecture</h2>
+  <pre><code>X (features)  →  Z = W·X + b  →  A = sigmoid(Z)  →  Loss</code></pre>
+  <ul>
+    <li><strong>X</strong> — input features, shape <code>(n_features, m)</code> where m = number of training examples</li>
+    <li><strong>W</strong> — weights, shape <code>(n_features, 1)</code></li>
+    <li><strong>b</strong> — bias, scalar</li>
+    <li><strong>A</strong> — predicted probability, shape <code>(1, m)</code></li>
+    <li><strong>Y</strong> — true labels, shape <code>(1, m)</code></li>
+  </ul>
+
+  <hr>
+
+  <h2>Forward Propagation</h2>
+  <p><strong>Step 1 — Linear combination:</strong></p>
+  $$Z = W^T X + b$$
+  <p>Each feature is multiplied by its weight, summed up, and a bias is added. This gives a raw score.</p>
+
+  <p><strong>Step 2 — Sigmoid activation:</strong></p>
+  $$A = \sigma(Z) = \frac{1}{1 + e^{-Z}}$$
+  <p>Sigmoid squashes the raw score into a probability between 0 and 1.</p>
+  <ul>
+    <li>If Z is very large → A ≈ 1 (confident it's class 1)</li>
+    <li>If Z is very small → A ≈ 0 (confident it's class 0)</li>
+    <li>If Z = 0 → A = 0.5 (completely uncertain)</li>
+  </ul>
+
+  <hr>
+
+  <h2>Loss Function</h2>
+  <p>We use <strong>binary cross-entropy loss:</strong></p>
+  $$\mathcal{L} = -\frac{1}{m} \sum_{i=1}^{m} \left[ y^{(i)} \log(a^{(i)}) + (1 - y^{(i)}) \log(1 - a^{(i)}) \right]$$
+
+  <p><strong>Why not mean squared error?</strong></p>
+  <p>MSE with sigmoid creates a non-convex loss surface with many local minima — gradient descent gets stuck. Cross-entropy with sigmoid creates a convex surface — gradient descent always finds the global minimum.</p>
+
+  <p><strong>Intuition behind the formula:</strong></p>
+  <ul>
+    <li>When y=1: loss = -log(A). If A→1 (correct), loss→0. If A→0 (wrong), loss→∞</li>
+    <li>When y=0: loss = -log(1-A). If A→0 (correct), loss→0. If A→1 (wrong), loss→∞</li>
+  </ul>
+  <p>The network is heavily penalized for confident wrong predictions.</p>
+
+  <hr>
+
+  <h2>Backward Propagation</h2>
+  <p>The goal: find how much each weight contributes to the loss, so we can reduce it.</p>
+  <p>We use the <strong>chain rule</strong> to compute how the loss changes with respect to each parameter.</p>
+
+  <p><strong>dZ — derivative of loss w.r.t Z:</strong></p>
+  $$\frac{\partial \mathcal{L}}{\partial Z} = \frac{\partial \mathcal{L}}{\partial A} \cdot \frac{\partial A}{\partial Z}$$
+  <p>Breaking it down:</p>
+  $$\frac{\partial \mathcal{L}}{\partial A} = -\frac{Y}{A} + \frac{1-Y}{1-A}$$
+  $$\frac{\partial A}{\partial Z} = A(1-A) \quad \text{(sigmoid derivative)}$$
+  <p>Multiplying these together simplifies cleanly to:</p>
+  $$dZ = A - Y$$
+  <p>This is the key shortcut — sigmoid + cross-entropy always gives <code>A - Y</code> for the output layer.</p>
+
+  <p><strong>dW — derivative of loss w.r.t W:</strong></p>
+  $$dW = \frac{\partial \mathcal{L}}{\partial W} = \frac{\partial \mathcal{L}}{\partial Z} \cdot \frac{\partial Z}{\partial W}$$
+  <p>From $Z = W^T X + b$, we get $\frac{\partial Z}{\partial W} = X$. So:</p>
+  $$dW = \frac{\partial \mathcal{L}}{\partial W} = \frac{1}{m} X \cdot dZ^T$$
+
+  <p><strong>db — derivative of loss w.r.t b:</strong></p>
+  $$db = \frac{\partial \mathcal{L}}{\partial b} = \frac{\partial \mathcal{L}}{\partial Z} \cdot \frac{\partial Z}{\partial b}$$
+  <p>From $Z = W^T X + b$, we get $\frac{\partial Z}{\partial b} = 1$. So:</p>
+  $$db = \frac{\partial \mathcal{L}}{\partial b} = \frac{1}{m} \sum dZ$$
+  <p>We divide by m to average the gradient across all training examples — without this, the gradient magnitude would scale with dataset size.</p>
+
+  <hr>
+
+  <h2>Gradient Descent</h2>
+  <p>Once we have the gradients, we update the weights:</p>
+  $$W := W - \alpha \cdot dW$$
+  $$b := b - \alpha \cdot db$$
+  <p>Where <strong>α</strong> (alpha) is the learning rate — how big a step we take toward the minimum.</p>
+  <ul>
+    <li>Too large → overshoots the minimum, loss diverges</li>
+    <li>Too small → takes forever to converge</li>
+    <li>Just right → loss decreases smoothly to minimum</li>
+  </ul>
+
+  <hr>
+
+  <h2>Code Structure</h2>
+  <pre><code>sigmoid(z)              → applies sigmoid activation
+initialize_with_zeros() → initializes W=0, b=0
+propagate()             → forward pass + compute gradients
+optimize()              → gradient descent loop
+predict()               → threshold A > 0.5 to get 0/1 predictions
+model()                 → ties everything together
+evaluate()              → prints accuracy, precision, recall, F1, confusion matrix</code></pre>
+
+  <hr>
+
+  <h2>Dataset</h2>
+  <p><strong>Cat vs Non-Cat</strong> — same dataset used in Andrew Ng's Deep Learning Specialization.</p>
+  <ul>
+    <li>209 training examples, 50 test examples</li>
+    <li>64×64 RGB images → flattened to 12,288 features per image</li>
+    <li>Binary labels: cat (1) vs non-cat (0)</li>
+  </ul>
+
+  <hr>
+
+  <h2>Results</h2>
+  <table>
+    <thead><tr><th></th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1</th></tr></thead>
+    <tbody>
+      <tr><td>Train</td><td>99.04%</td><td>0.9861</td><td>0.9861</td><td>0.9861</td></tr>
+      <tr><td>Test</td><td>70.00%</td><td>0.8214</td><td>0.6970</td><td>0.7541</td></tr>
+    </tbody>
+  </table>
+  <p><strong>Classic overfitting</strong> — 99% train vs 70% test. The model memorizes the 209 training examples perfectly but doesn't generalize.</p>
+  <p><strong>Confusion Matrix (Test):</strong></p>
+  <pre><code>                 Predicted
+                 Non-Cat  Cat
+Actual Non-Cat  [  12        5  ]
+Actual Cat      [  10       23  ]</code></pre>
+
+  <hr>
+
+  <h2>Limitations</h2>
+  <h3>1. Linear Decision Boundary</h3>
+  <p>Logistic regression can only separate classes with a single hyperplane in feature space. Any problem where the decision boundary is curved, circular, or otherwise non-linear cannot be solved by logistic regression regardless of how long it trains.</p>
+  <p>The solution is hidden layers — a neural network with non-linear activations can approximate arbitrarily complex decision boundaries.</p>
+
+  <h3>2. No Spatial Awareness</h3>
+  <p>Flattening a 64×64 image into a 12,288-length vector destroys all spatial structure. Pixel (0,0) and pixel (63,63) are treated as completely independent features with no notion of proximity. The same object appearing in different positions of the image produces entirely different input vectors — the model has no mechanism to recognize them as the same pattern.</p>
+  <p>This problem is <strong>not solved by adding more fully connected layers</strong>. A deep FC network still processes each pixel independently — more layers add representational power but cannot recover spatial structure that was lost during flattening.</p>
+  <p>The correct solution is Convolutional Neural Networks (CNNs), which apply learned filters across the entire image — detecting patterns regardless of their position.</p>
+
+  <hr>
+
+  <h2>Key Takeaways</h2>
+  <ol>
+    <li>Logistic regression = single neuron with sigmoid activation</li>
+    <li><code>dZ = A - Y</code> is a shortcut from the chain rule for sigmoid + cross-entropy</li>
+    <li>The loss surface is convex — gradient descent always converges</li>
+    <li>Dividing gradients by $m$ ensures learning rate is independent of dataset size</li>
+    <li>Linear models cannot learn the complex patterns in image data</li>
+  </ol>
+</section>
+
+<!-- ═══════════════════════════════════════════ SHALLOW NN -->
+<section id="shallow_nn">
+  <h1>02 — Shallow Neural Network from Scratch</h1>
+  <div class="notebook-note">Notebook: <code>02_shallow_neural_network/shallow_nn.ipynb</code> — open with Jupyter.</div>
+  <p>A two-layer neural network built using only NumPy — no frameworks. Applied to the Cat vs Non-Cat dataset.</p>
+
+  <hr>
+
+  <h2>Motivation</h2>
+  <p>Logistic regression draws a single linear decision boundary. For problems where classes are not linearly separable, this is a fundamental limitation — no amount of training will fix it.</p>
+  <p>Adding a hidden layer with a non-linear activation function allows the network to learn curved, complex decision boundaries. This is the key step from logistic regression to a neural network.</p>
+
+  <hr>
+
+  <h2>Architecture</h2>
+  <pre><code>X → Z1 = W1·X + b1 → A1 = tanh(Z1) → Z2 = W2·A1 + b2 → A2 = sigmoid(Z2) → Loss</code></pre>
+  <ul>
+    <li><strong>Layer 1 (hidden):</strong> tanh activation — learns non-linear representations of the input</li>
+    <li><strong>Layer 2 (output):</strong> sigmoid activation — outputs a probability between 0 and 1</li>
+  </ul>
+
+  <hr>
+
+  <h2>Forward Propagation</h2>
+  <p><strong>Hidden layer:</strong></p>
+  $$Z_1 = W_1 X + b_1$$
+  $$A_1 = \tanh(Z_1) = \frac{e^{Z_1} - e^{-Z_1}}{e^{Z_1} + e^{-Z_1}}$$
+  <p><strong>Output layer:</strong></p>
+  $$Z_2 = W_2 A_1 + b_2$$
+  $$A_2 = \sigma(Z_2) = \frac{1}{1 + e^{-Z_2}}$$
+  <p><strong>Loss (binary cross-entropy):</strong></p>
+  $$\mathcal{L} = -\frac{1}{m} \sum_{i=1}^{m} \left[ y^{(i)} \log(a_2^{(i)}) + (1 - y^{(i)}) \log(1 - a_2^{(i)}) \right]$$
+
+  <hr>
+
+  <h2>Backward Propagation</h2>
+  <p>Gradients are computed layer by layer using the chain rule, starting from the output and flowing backward.</p>
+
+  <h3>Output Layer</h3>
+  <p>We want $dZ_2 = \frac{\partial \mathcal{L}}{\partial Z_2}$. $Z_2$ is not directly in the loss formula, so we apply the chain rule:</p>
+  $$dZ_2 = \frac{\partial \mathcal{L}}{\partial Z_2} = \frac{\partial \mathcal{L}}{\partial A_2} \cdot \frac{\partial A_2}{\partial Z_2}$$
+
+  <p><strong>Part 1 — $\frac{\partial \mathcal{L}}{\partial A_2}$ (derivative of loss w.r.t $A_2$):</strong></p>
+  <p>$A_2$ appears directly in the loss formula, so we differentiate:</p>
+  $$\frac{\partial \mathcal{L}}{\partial A_2} = -\frac{Y}{A_2} + \frac{1 - Y}{1 - A_2}$$
+
+  <p><strong>Part 2 — $\frac{\partial A_2}{\partial Z_2}$ (derivative of sigmoid w.r.t $Z_2$):</strong></p>
+  $$\frac{\partial A_2}{\partial Z_2} = \sigma'(Z_2) = A_2(1 - A_2)$$
+
+  <p><strong>Combining both parts:</strong></p>
+  $$dZ_2 = \left(-\frac{Y}{A_2} + \frac{1-Y}{1-A_2}\right) \cdot A_2(1 - A_2)$$
+  <p>Expanding and simplifying:</p>
+  $$dZ_2 = A_2 - Y$$
+  <p>This simplification only works for sigmoid + binary cross-entropy together. It is a derived result, not a definition.</p>
+
+  $$dW_2 = \frac{\partial \mathcal{L}}{\partial W_2} = \frac{1}{m} dZ_2 \cdot A_1^T$$
+  $$db_2 = \frac{\partial \mathcal{L}}{\partial b_2} = \frac{1}{m} \sum dZ_2$$
+
+  <h3>Hidden Layer</h3>
+  <p>For the hidden layer, $dZ_1$ cannot be computed directly from the loss. We apply the chain rule:</p>
+  $$dZ_1 = \frac{\partial \mathcal{L}}{\partial Z_1} = \frac{\partial \mathcal{L}}{\partial A_1} \cdot \frac{\partial A_1}{\partial Z_1}$$
+
+  <p><strong>Part 1 — $\frac{\partial \mathcal{L}}{\partial A_1}$ (how much does loss change when $A_1$ changes):</strong></p>
+  <p>$A_1$ is not directly in the loss formula. To find how the loss changes with $A_1$, we go through the chain — $A_1$ affects $Z_2$, and $Z_2$ affects the loss:</p>
+  $$\frac{\partial \mathcal{L}}{\partial A_1} = \frac{\partial \mathcal{L}}{\partial Z_2} \cdot \frac{\partial Z_2}{\partial A_1}$$
+  <p>From the forward pass: $Z_2 = W_2 A_1 + b_2$, so $\frac{\partial Z_2}{\partial A_1} = W_2$. And $\frac{\partial \mathcal{L}}{\partial Z_2} = dZ_2$ (already computed in the output layer step). Putting it together (transposed for correct dimensions):</p>
+  $$\frac{\partial \mathcal{L}}{\partial A_1} = W_2^T \cdot dZ_2$$
+  <p>This is the general pattern: the error signal at any hidden layer comes from the weights and the gradient of the layer directly ahead of it.</p>
+
+  <p><strong>Part 2 — $\frac{\partial A_1}{\partial Z_1}$ (derivative of the activation function used in this layer):</strong></p>
+  <p>This layer used tanh, so:</p>
+  $$\frac{\partial A_1}{\partial Z_1} = \tanh'(Z_1) = 1 - \tanh^2(Z_1) = 1 - A_1^2$$
+
+  <p><strong>Combining both parts:</strong></p>
+  $$dZ_1 = \frac{\partial \mathcal{L}}{\partial A_1} \cdot \frac{\partial A_1}{\partial Z_1} = W_2^T \cdot dZ_2 \times (1 - A_1^2)$$
+  <p>This is the general pattern for any hidden layer — the error signal from the next layer multiplied by the derivative of the activation function used in the current layer. The activation derivative changes depending on what activation was used (tanh, ReLU, sigmoid), but the structure is always the same.</p>
+
+  $$dW_1 = \frac{\partial \mathcal{L}}{\partial W_1} = \frac{1}{m} dZ_1 \cdot X^T$$
+  $$db_1 = \frac{\partial \mathcal{L}}{\partial b_1} = \frac{1}{m} \sum dZ_1$$
+
+  <hr>
+
+  <h2>Why tanh for the Hidden Layer?</h2>
+  <p>Both sigmoid and tanh are valid activation functions, but tanh is preferred for hidden layers for one key reason: <strong>zero-centering</strong>.</p>
+  <table>
+    <thead><tr><th>Property</th><th>Sigmoid</th><th>tanh</th></tr></thead>
+    <tbody>
+      <tr><td>Output range</td><td>(0, 1)</td><td>(-1, 1)</td></tr>
+      <tr><td>Zero-centered</td><td>No</td><td>Yes</td></tr>
+      <tr><td>Saturation</td><td>Both ends</td><td>Both ends</td></tr>
+    </tbody>
+  </table>
+  <p>Sigmoid always outputs positive values. When all activations are positive, the gradients during backprop are always the same sign — causing zig-zag updates in weight space, slowing convergence.</p>
+  <p>tanh outputs values between -1 and 1, centered around zero. This means gradients can be both positive and negative, allowing more direct paths to the minimum.</p>
+
+  <hr>
+
+  <h2>Why Weights Are Initialized with <code>* 0.01</code></h2>
+  <p>Weights are initialized as small random values:</p>
+  <pre><code>W1 = np.random.randn(n_hidden, n_features) * 0.01</code></pre>
+  <p>If weights are large at initialization, $Z = WX + b$ will be large, pushing tanh and sigmoid into their <strong>saturated regions</strong> (flat parts of the curve). In these regions, the derivative is near zero — gradients vanish and learning slows dramatically or stops.</p>
+  <p>Small weights keep $Z$ near zero at the start, where both tanh and sigmoid have the steepest gradients and learn fastest.</p>
+
+  <hr>
+
+  <h2>Code Structure</h2>
+  <pre><code>sigmoid(z)               → sigmoid activation
+initialize_parameters()  → random init with * 0.01
+propagate()              → forward pass + backward pass
+optimize()               → gradient descent loop
+predict()                → threshold A2 > 0.5
+model()                  → ties everything together
+evaluate()               → accuracy, precision, recall, F1, confusion matrix</code></pre>
+
+  <hr>
+
+  <h2>Dataset</h2>
+  <p><strong>Cat vs Non-Cat</strong> — same dataset used in Andrew Ng's Deep Learning Specialization.</p>
+  <ul>
+    <li>209 training examples, 50 test examples</li>
+    <li>64×64 RGB images → flattened to 12,288 features per image</li>
+    <li>Binary labels: cat (1) vs non-cat (0)</li>
+  </ul>
+
+  <hr>
+
+  <h2>Results</h2>
+  <table>
+    <thead><tr><th></th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1</th></tr></thead>
+    <tbody>
+      <tr><td>Train</td><td>96.17%</td><td>0.9444</td><td>0.9444</td><td>0.9444</td></tr>
+      <tr><td>Test</td><td>68.00%</td><td>0.8148</td><td>0.6667</td><td>0.7333</td></tr>
+    </tbody>
+  </table>
+  <p><strong>Confusion Matrix (Test):</strong></p>
+  <pre><code>                 Predicted
+                 Non-Cat  Cat
+Actual Non-Cat  [  12        5  ]
+Actual Cat      [  11       22  ]</code></pre>
+  <p>Test accuracy dropped slightly from logistic regression (70% → 68%). This can happen with a small dataset — the hidden layer adds parameters that need more data to generalize well.</p>
+
+  <hr>
+
+  <h2>Limitations</h2>
+  <h3>Fully Connected — No Spatial Awareness</h3>
+  <p>The hidden layer learns non-linear combinations of pixel values, but it still treats every pixel as an independent feature. There is no concept of proximity — pixels that are spatially close in the image are not treated any differently from pixels that are far apart.</p>
+  <p>The same cat appearing in different positions of the image produces entirely different activation patterns. The network has no mechanism to recognize positional invariance.</p>
+  <p>Adding more hidden layers increases the depth and representational power of the network, but does not solve this problem. Spatial structure, once destroyed by flattening, cannot be recovered by any number of fully connected layers.</p>
+  <p>The correct solution is Convolutional Neural Networks — which preserve and exploit spatial structure through learned filters.</p>
+</section>
+
+<!-- ═══════════════════════════════════════════ DEEP NN -->
+<section id="deep_nn">
+  <h1>03 — Deep Neural Network from Scratch</h1>
+  <div class="notebook-note">Notebook: <code>03_deep_neural_network/deep_nn.ipynb</code> — open with Jupyter.</div>
+  <p>An L-layer neural network built using only NumPy — no frameworks. The number of layers and nodes per layer are fully configurable. Applied to the Cat vs Non-Cat dataset.</p>
+
+  <hr>
+
+  <h2>Motivation</h2>
+  <p>The shallow neural network added one hidden layer and gained the ability to learn non-linear decision boundaries. But one hidden layer is still limited in what it can represent.</p>
+  <p>A deeper network stacks multiple hidden layers. Each layer learns to recognize increasingly abstract patterns — early layers detect simple combinations of features, later layers combine those into more complex representations. This is the same principle behind how the visual cortex in the brain processes information.</p>
+  <p>The question is: can we generalize the forward and backward pass equations to work for any number of layers, without writing separate code for each layer?</p>
+  <p>The answer is yes — using for loops.</p>
+
+  <hr>
+
+  <h2>Architecture</h2>
+  <p>For a network with L layers:</p>
+  <pre><code>X → [Z[1]=W[1]·X+b[1] → A[1]=tanh(Z[1])] → ... → [Z[L]=W[L]·A[L-1]+b[L] → A[L]=sigmoid(Z[L])] → Loss</code></pre>
+  <ul>
+    <li><strong>Layers 1 to L−1 (hidden):</strong> tanh activation</li>
+    <li><strong>Layer L (output):</strong> sigmoid activation</li>
+    <li><strong>A[0] = X</strong> — the input is treated as the activation of layer 0</li>
+  </ul>
+
+  <hr>
+
+  <h2>Parameter Initialization</h2>
+  <p>For each layer $l$ from 1 to L:</p>
+  $$W^{[l]} \in \mathbb{R}^{n^{[l]} \times n^{[l-1]}}, \quad b^{[l]} \in \mathbb{R}^{n^{[l]} \times 1}$$
+  <p>Where $n^{[l]}$ is the number of nodes in layer $l$ and $n^{[l-1]}$ is the number of nodes in the previous layer (or number of features for $l=1$).</p>
+  <p>Weights are initialized with small random values:</p>
+  <pre><code>W = np.random.randn(n[l], n[l-1]) * 0.01
+b = np.zeros((n[l], 1))</code></pre>
+  <p><strong>Why <code>* 0.01</code>?</strong> If weights are large, $Z = WA + b$ will be large, pushing tanh and sigmoid into their flat saturated regions where the derivative is near zero. Training becomes extremely slow or stops entirely. Small weights keep Z near zero at initialization, where gradients are largest.</p>
+  <p><strong>Why not initialize to zero?</strong> Zero initialization makes every neuron in a layer identical — they compute the same output, receive the same gradients, and update identically forever. The neurons never differentiate. Random initialization breaks this symmetry.</p>
+
+  <hr>
+
+  <h2>Forward Propagation</h2>
+  <p>The same two equations repeat for every layer:</p>
+  <p><strong>Step 1 — Linear combination:</strong></p>
+  $$Z^{[l]} = W^{[l]} A^{[l-1]} + b^{[l]}$$
+  <p><strong>Step 2 — Activation:</strong></p>
+  $$A^{[l]} = \begin{cases} \tanh(Z^{[l]}) & \text{if } l < L \quad \text{(hidden layers)} \\ \sigma(Z^{[l]}) & \text{if } l = L \quad \text{(output layer)} \end{cases}$$
+  <p>Starting from $A^{[0]} = X$, this loop runs from $l = 1$ to $l = L$.</p>
+  <p><strong>Loss (binary cross-entropy):</strong></p>
+  $$\mathcal{L} = -\frac{1}{m} \sum_{i=1}^{m} \left[ y^{(i)} \log(A_L^{(i)}) + (1 - y^{(i)}) \log(1 - A_L^{(i)}) \right]$$
+
+  <hr>
+
+  <h2>Backward Propagation</h2>
+  <p>The goal is to compute $dW^{[l]}$ and $db^{[l]}$ for every layer so we can update the weights. This requires computing $dZ^{[l]}$ for each layer, starting from the output and working backward.</p>
+
+  <h3>Output Layer (l = L)</h3>
+  <p>We want $dZ^{[L]} = \frac{\partial \mathcal{L}}{\partial Z^{[L]}}$. Applying the chain rule:</p>
+  $$dZ^{[L]} = \frac{\partial \mathcal{L}}{\partial Z^{[L]}} = \frac{\partial \mathcal{L}}{\partial A^{[L]}} \cdot \frac{\partial A^{[L]}}{\partial Z^{[L]}}$$
+
+  <p><strong>Part 1 — $\frac{\partial \mathcal{L}}{\partial A^{[L]}}$:</strong></p>
+  <p>$A^{[L]}$ appears directly in the loss, so we differentiate:</p>
+  $$\frac{\partial \mathcal{L}}{\partial A^{[L]}} = -\frac{Y}{A^{[L]}} + \frac{1 - Y}{1 - A^{[L]}}$$
+
+  <p><strong>Part 2 — $\frac{\partial A^{[L]}}{\partial Z^{[L]}}$:</strong></p>
+  <p>The output layer uses sigmoid:</p>
+  $$\frac{\partial A^{[L]}}{\partial Z^{[L]}} = \sigma'(Z^{[L]}) = A^{[L]}(1 - A^{[L]})$$
+
+  <p><strong>Combining both parts:</strong></p>
+  $$dZ^{[L]} = \left(-\frac{Y}{A^{[L]}} + \frac{1-Y}{1-A^{[L]}}\right) \cdot A^{[L]}(1 - A^{[L]})$$
+  <p>Expanding and simplifying:</p>
+  $$dZ^{[L]} = A^{[L]} - Y$$
+  <p>This simplification is specific to sigmoid + binary cross-entropy. It is a derived result, not a shortcut we invented.</p>
+
+  <h3>Hidden Layers (l = L−1 down to 1)</h3>
+  <p>For hidden layers, $dZ^{[l]}$ cannot be computed from the loss directly. We go through the chain:</p>
+  $$dZ^{[l]} = \frac{\partial \mathcal{L}}{\partial Z^{[l]}} = \frac{\partial \mathcal{L}}{\partial A^{[l]}} \cdot \frac{\partial A^{[l]}}{\partial Z^{[l]}}$$
+
+  <p><strong>Part 1 — $\frac{\partial \mathcal{L}}{\partial A^{[l]}}$:</strong></p>
+  <p>$A^{[l]}$ is not in the loss directly. It fed into $Z^{[l+1]}$ through $W^{[l+1]}$. So we trace the path: $A^{[l]} \rightarrow Z^{[l+1]} \rightarrow \mathcal{L}$:</p>
+  $$\frac{\partial \mathcal{L}}{\partial A^{[l]}} = \frac{\partial \mathcal{L}}{\partial Z^{[l+1]}} \cdot \frac{\partial Z^{[l+1]}}{\partial A^{[l]}}$$
+  <p>From the forward pass $Z^{[l+1]} = W^{[l+1]} A^{[l]} + b^{[l+1]}$, so $\frac{\partial Z^{[l+1]}}{\partial A^{[l]}} = W^{[l+1]}$. And $\frac{\partial \mathcal{L}}{\partial Z^{[l+1]}} = dZ^{[l+1]}$ (already computed in the previous backward step). Putting it together (transposed for correct dimensions):</p>
+  $$\frac{\partial \mathcal{L}}{\partial A^{[l]}} = W^{[l+1]T} \cdot dZ^{[l+1]}$$
+
+  <p><strong>Part 2 — $\frac{\partial A^{[l]}}{\partial Z^{[l]}}$:</strong></p>
+  <p>Hidden layers use tanh:</p>
+  $$\frac{\partial A^{[l]}}{\partial Z^{[l]}} = \tanh'(Z^{[l]}) = 1 - \tanh^2(Z^{[l]}) = 1 - (A^{[l]})^2$$
+
+  <p><strong>Combining both parts:</strong></p>
+  $$dZ^{[l]} = W^{[l+1]T} \cdot dZ^{[l+1]} \times (1 - (A^{[l]})^2)$$
+  <p>This is the general backward step for any hidden layer — the error signal from the layer ahead, scaled by the local activation derivative.</p>
+
+  <h3>Gradients for Weights and Biases (all layers)</h3>
+  <p>Once $dZ^{[l]}$ is known, $dW^{[l]}$ and $db^{[l]}$ follow the same formula for every layer:</p>
+  $$dW^{[l]} = \frac{\partial \mathcal{L}}{\partial W^{[l]}} = \frac{\partial \mathcal{L}}{\partial Z^{[l]}} \cdot \frac{\partial Z^{[l]}}{\partial W^{[l]}} = \frac{1}{m} dZ^{[l]} \cdot A^{[l-1]T}$$
+  $$db^{[l]} = \frac{\partial \mathcal{L}}{\partial b^{[l]}} = \frac{\partial \mathcal{L}}{\partial Z^{[l]}} \cdot \frac{\partial Z^{[l]}}{\partial b^{[l]}} = \frac{1}{m} \sum dZ^{[l]}$$
+  <p>From $Z^{[l]} = W^{[l]} A^{[l-1]} + b^{[l]}$: $\frac{\partial Z^{[l]}}{\partial W^{[l]}} = A^{[l-1]}$ and $\frac{\partial Z^{[l]}}{\partial b^{[l]}} = 1$.</p>
+  <p>We divide by $m$ to average the gradient across all training examples.</p>
+
+  <hr>
+
+  <h2>The Vanishing Gradient Problem</h2>
+  <p>During backprop, gradients flow backward through every layer by being multiplied by the activation derivative at each step.</p>
+  <p>For tanh, the derivative is $1 - A^2$. When $|A|$ is close to 1 (saturated region), this derivative approaches 0. In a deep network, the gradient at layer $l$ is proportional to the product of all activation derivatives from layer $L$ down to $l+1$:</p>
+  $$\frac{\partial \mathcal{L}}{\partial Z^{[l]}} \propto \prod_{l+1}^{L} (1 - (A^{[l]})^2)$$
+  <p>If each term is small (say 0.1), and there are 5 layers, the gradient reaching layer 1 is $0.1^4 = 0.0001$. The first layers receive almost no learning signal and stop updating.</p>
+  <p>This is why the deep network in this repo performs poorly with a small learning rate — the gradient vanishes before reaching the early layers.</p>
+
+  <hr>
+
+  <h2>Code Structure</h2>
+  <pre><code>sigmoid(z)           → sigmoid activation
+initialize_params()  → random init with * 0.01 for each layer
+propagate()          → full forward pass + full backward pass for L layers
+optimize()           → gradient descent loop
+predict()            → threshold A[L] > 0.5
+model()              → initializes all layers, runs optimization
+evaluate()           → accuracy, precision, recall, F1, confusion matrix</code></pre>
+
+  <hr>
+
+  <h2>Dataset</h2>
+  <p><strong>Cat vs Non-Cat</strong> — same dataset used in Andrew Ng's Deep Learning Specialization.</p>
+  <ul>
+    <li>209 training examples, 50 test examples</li>
+    <li>64×64 RGB images → flattened to 12,288 features per image</li>
+    <li>Binary labels: cat (1) vs non-cat (0)</li>
+  </ul>
+
+  <hr>
+
+  <h2>Results</h2>
+  <p>Trained with <code>learning_rate=0.005, epochs=2000</code>, architecture <code>{1:8, 2:4, 3:1}</code>:</p>
+  <table>
+    <thead><tr><th></th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1</th></tr></thead>
+    <tbody>
+      <tr><td>Train</td><td>65.55%</td><td>0.00</td><td>0.00</td><td>0.00</td></tr>
+      <tr><td>Test</td><td>34.00%</td><td>0.00</td><td>0.00</td><td>0.00</td></tr>
+    </tbody>
+  </table>
+  <p>The network predicts everything as 0 — it never learns. The vanishing gradient problem prevents the learning signal from reaching the early layers with this learning rate.</p>
+
+  <hr>
+
+  <h2>Limitations</h2>
+  <h3>Hyperparameter Sensitivity</h3>
+  <p>Deeper networks are harder to train. The same learning rate that works for logistic regression causes the deep network to either not learn at all (too small) or oscillate (too large).</p>
+
+  <h3>No Spatial Awareness</h3>
+  <p>This limitation carries over from logistic regression and the shallow network. Fully connected layers treat every pixel as an independent feature — spatial structure is destroyed at the flattening step and cannot be recovered by any number of FC layers. The solution is Convolutional Neural Networks.</p>
+</section>
+
+<!-- ═══════════════════════════════════════════ L2 REGULARIZATION -->
+<section id="regularization_l2">
+  <h1>L2 Regularization</h1>
+  <p class="section-tag">Regularization /  L2</p>
+
+  <hr>
+
+  <h2>The Problem: Why Overfitting Happens</h2>
+  <p>A neural network learns by adjusting its weights to minimize the training loss. With enough capacity and enough iterations, it can reduce training loss to near zero — not by learning the true pattern, but by memorizing every training example individually.</p>
+  <p>The tell-tale sign of memorization is <strong>large weights</strong>. When a weight is very large, a tiny change in one input feature causes a huge swing in the output. The network becomes hypersensitive — it fits the exact quirks of the training set but falls apart on anything new.</p>
+  <p>The fix is to make large weights expensive. If the cost function punishes large weights, the optimizer is forced to find a solution that is both accurate <em>and</em> small — which tends to be a smoother, more generalizable function.</p>
+
+  <hr>
+
+  <h2>Step 1 — The Original Loss</h2>
+  <p>Start with the standard binary cross-entropy loss for $m$ training examples:</p>
+  $$J = -\frac{1}{m} \sum_{i=1}^{m} \left[ y^{(i)} \log \hat{y}^{(i)} + (1 - y^{(i)}) \log(1 - \hat{y}^{(i)}) \right]$$
+  <p>Where:</p>
+  <ul>
+    <li>$y^{(i)} \in \{0, 1\}$ is the true label for example $i$</li>
+    <li>$\hat{y}^{(i)} = A^{[L](i)}$ is the network's predicted probability</li>
+    <li>The sum averages the loss over all examples so that $J$ does not grow with dataset size</li>
+  </ul>
+  <p>This is the only thing the optimizer currently cares about. It will make weights as large as needed to drive this number down — and that is the problem.</p>
+
+  <hr>
+
+  <h2>Step 2 — Building a Penalty for Large Weights</h2>
+  <p>We want a term that is small when weights are small, and large when weights are large.</p>
+  <p><strong>Start with the simplest idea:</strong> sum the weights.</p>
+  $$\text{penalty} = W_1 + W_2 + \dots + W_n$$
+  <p><strong>Problem:</strong> negative weights cancel positive weights. A weight of $-1000$ and a weight of $+1000$ would sum to zero, fooling the penalty into thinking the model is well-behaved.</p>
+  <p><strong>Fix:</strong> square each weight before summing.</p>
+  $$\text{penalty} = W_1^2 + W_2^2 + \dots + W_n^2$$
+  <p>Squaring does two things: it removes the sign (large negative weights are just as costly as large positive ones), and it penalizes large weights disproportionately — a weight of 10 costs 100 times more than a weight of 1.</p>
+  <p>This is the <strong>L2 norm squared</strong>, also called the <strong>squared Euclidean norm</strong>:</p>
+  $$\text{penalty} = \|\mathbf{w}\|_2^2 = \sum_{k=1}^{n} W_k^2$$
+
+  <hr>
+
+  <h2>Step 3 — Scaling the Penalty</h2>
+  <p>If we add the raw penalty to the loss, it will have a completely different magnitude and mess up the balance between the two terms. We need a scaling factor.</p>
+  <p>The chosen form is:</p>
+  $$\text{scaled penalty} = \frac{\lambda}{2m} \sum_{k=1}^{n} W_k^2$$
+  <p>Each piece of this scaling factor has a specific reason:</p>
+  <p><strong>Why $\lambda$?</strong><br>
+  $\lambda$ is a hyperparameter that controls how much we care about regularization vs. fitting the data. A larger $\lambda$ means more weight shrinkage, less overfitting, but potentially underfitting if too large. It sits in the numerator because we want a larger $\lambda$ to mean a larger penalty.</p>
+  <p><strong>Why divide by $m$?</strong><br>
+  The loss averages over all examples so that it does not grow with dataset size. If we don't divide the penalty by $m$ as well, then the penalty gets larger on a large dataset. That's why we divide by $m$ — so the penalty is independent of dataset size. Dividing the penalty by $m$ keeps both terms on the same scale, so $\lambda$ can be tuned independently of dataset size.</p>
+  <p><strong>Why divide by 2?</strong><br>
+  When we differentiate $W^2$, we get $2W$. The $\frac{1}{2}$ preemptively cancels this factor:</p>
+  $$\frac{\partial}{\partial W} \left( \frac{1}{2} W^2 \right) = \frac{1}{2} \cdot 2W = W$$
+  <p>This keeps the gradient clean — no stray factor of 2 propagated through every layer during backprop. It has no effect on the optimization itself.</p>
+
+  <hr>
+
+  <h2>Step 4 — Extending the Penalty to a Neural Network</h2>
+  <p><strong>Goal:</strong> generalize the flat sum $\sum_k W_k^2$ from Step 2 to the full weight structure of an $L$-layer network.</p>
+  <p>In a neural network, weights are not a flat list. Layer $l$ has a weight matrix $W^{[l]}$ of shape $(n^{[l]} \times n^{[l-1]})$, where $n^{[l]}$ is the number of neurons in layer $l$.</p>
+
+  <p><strong>Sub-step 4.1 — Penalty for a single element of one layer:</strong></p>
+  <p>Pick any single weight $W_{jk}^{[l]}$ — row $j$, column $k$, layer $l$. Its contribution to the penalty is:</p>
+  $$\left(W_{jk}^{[l]}\right)^2$$
+
+  <p><strong>Sub-step 4.2 — Sum over all elements of one layer:</strong></p>
+  <p>To cover every element in $W^{[l]}$, run two nested sums — one over rows $j$, one over columns $k$:</p>
+  $$\sum_{j=1}^{n^{[l]}} \sum_{k=1}^{n^{[l-1]}} \left(W_{jk}^{[l]}\right)^2$$
+  <p>This quantity has a standard name: the <strong>Frobenius norm squared</strong>, written $\|W^{[l]}\|_F^2$.</p>
+  $$\|W^{[l]}\|_F^2 \;=\; \sum_{j=1}^{n^{[l]}} \sum_{k=1}^{n^{[l-1]}} \left(W_{jk}^{[l]}\right)^2$$
+
+  <p><strong>Sub-step 4.3 — Sum over all $L$ layers:</strong></p>
+  <p>Repeat Sub-step 4.2 for every layer and add the results:</p>
+  $$\sum_{l=1}^{L} \|W^{[l]}\|_F^2 = \sum_{l=1}^{L} \sum_{j=1}^{n^{[l]}} \sum_{k=1}^{n^{[l-1]}} \left(W_{jk}^{[l]}\right)^2$$
+  <p>Apply the $\frac{\lambda}{2m}$ scaling from Step 3:</p>
+  $$\boxed{\text{penalty} = \frac{\lambda}{2m} \sum_{l=1}^{L} \|W^{[l]}\|_F^2}$$
+
+  <hr>
+
+  <h2>Step 5 — The Regularized Cost Function</h2>
+  <p><strong>Goal:</strong> combine the original loss (Step 1) and the penalty (Step 4) into a single objective.</p>
+  <p>Take the cross-entropy loss $J$ from Step 1 and add the penalty from Step 4 directly:</p>
+  $$J_{\text{original}} = -\frac{1}{m} \sum_{i=1}^{m} \left[ y^{(i)} \log \hat{y}^{(i)} + (1 - y^{(i)}) \log(1 - \hat{y}^{(i)}) \right]$$
+  $$+ \quad \frac{\lambda}{2m} \sum_{l=1}^{L} \|W^{[l]}\|_F^2$$
+  $$\boxed{J_{\text{L2}} = -\frac{1}{m} \sum_{i=1}^{m} \left[ y^{(i)} \log \hat{y}^{(i)} + (1 - y^{(i)}) \log(1 - \hat{y}^{(i)}) \right] + \frac{\lambda}{2m} \sum_{l=1}^{L} \|W^{[l]}\|_F^2}$$
+  <p>The optimizer now minimizes both terms together. A solution with large weights pays a higher cost even if the prediction error is low — it must find a balance between accuracy and small weights. $\lambda$ controls how strictly that balance is enforced.</p>
+
+  <hr>
+
+  <h2>Step 6 — Backpropagation with L2 Regularization</h2>
+  <p><strong>Goal:</strong> derive how gradients change when the regularized cost $J_{\text{L2}}$ is used instead of $J_{\text{original}}$.</p>
+
+  <h3>6.1 — Split the derivative using the sum rule</h3>
+  <p>We need $\frac{\partial J_{\text{L2}}}{\partial W^{[l]}}$. Since $J_{\text{L2}}$ is a sum of two terms, the derivative splits:</p>
+  $$\frac{\partial J_{\text{L2}}}{\partial W^{[l]}} = \underbrace{\frac{\partial J_{\text{original}}}{\partial W^{[l]}}}_{\text{Term A}} + \underbrace{\frac{\partial}{\partial W^{[l]}} \left[ \frac{\lambda}{2m} \sum_{r=1}^{L} \|W^{[r]}\|_F^2 \right]}_{\text{Term B}}$$
+  <p>We derive Term A and Term B separately, then add them.</p>
+
+  <h3>6.2 — Derive Term A (gradient from the original loss)</h3>
+  <p>The forward pass for layer $l$ is:</p>
+  $$Z^{[l]} = W^{[l]} A^{[l-1]} + b^{[l]}$$
+  <p>Applying the chain rule:</p>
+  $$\frac{\partial J_{\text{original}}}{\partial W^{[l]}} = \frac{\partial J_{\text{original}}}{\partial Z^{[l]}} \cdot \frac{\partial Z^{[l]}}{\partial W^{[l]}}$$
+  <p>The first factor is the upstream gradient $dZ^{[l]}$, already computed during backprop. The second factor is $A^{[l-1]}$. Averaged over $m$ examples:</p>
+  $$\text{Term A} = \frac{1}{m}\, dZ^{[l]} \cdot {A^{[l-1]}}^T \quad \text{(transposed for correct dimensions)}$$
+
+  <h3>6.3 — Derive Term B (gradient from the penalty)</h3>
+  <p>Start simple. Imagine the penalty is just a flat list of weights:</p>
+  $$\frac{\lambda}{2m}\left(W_1^2 + W_2^2 + W_3^2 + \dots + W_n^2\right)$$
+  <p>Now take the derivative with respect to $W_1$:</p>
+  $$\frac{\partial}{\partial W_1}\left[\frac{\lambda}{2m}\left(W_1^2 + W_2^2 + W_3^2 + \dots + W_n^2\right)\right]$$
+  <p>$W_2^2,\ W_3^2,\ \dots,\ W_n^2$ do not contain $W_1$ — they are constants. Constants vanish under differentiation. Only $W_1^2$ survives:</p>
+  $$= \frac{\lambda}{2m} \cdot \frac{\partial}{\partial W_1}\, W_1^2 = \frac{\lambda}{2m} \cdot 2W_1 = \frac{\lambda}{m} W_1$$
+  <p>The same logic holds for any $W_k$ — differentiate w.r.t. $W_k$, every other term is a constant and drops out, leaving:</p>
+  $$\frac{\partial}{\partial W_k}\left[\frac{\lambda}{2m}\sum_{j=1}^n W_j^2\right] = \frac{\lambda}{m} W_k$$
+  <p>In a neural network the weights are a matrix, not a flat list — but the idea is identical. Each element $W_{jk}^{[l]}$ appears in the sum exactly once. Differentiating w.r.t. it kills every other term, and we get:</p>
+  $$\text{Term B} = \frac{\lambda}{m} W^{[l]}$$
+
+  <h3>6.4 — Combine: the new $dW^{[l]}$</h3>
+  <p>Add Term A and Term B:</p>
+  $$\boxed{dW^{[l]}_{\text{L2}} = \underbrace{\frac{1}{m}\, dZ^{[l]} \cdot {A^{[l-1]}}^T}_{\text{Term A: original gradient}} + \underbrace{\frac{\lambda}{m} W^{[l]}}_{\text{Term B: penalty gradient}}}$$
+  <p>Everything else in backprop is unchanged. Only $dW^{[l]}$ gains an extra term.</p>
+
+  <h3>6.5 — Why $db^{[l]}$ is unaffected</h3>
+  <p>The penalty $\frac{\lambda}{2m} \sum_r \|W^{[r]}\|_F^2$ contains no bias variables at all. Differentiating it with respect to $b^{[l]}$ gives zero, so Term B for biases is zero. Therefore:</p>
+  $$db^{[l]}_{\text{L2}} = db^{[l]}_{\text{original}} = \frac{1}{m} \sum_{i=1}^{m} dZ^{[l](i)}$$
+  <p>Biases shift the output but do not scale inputs — they do not make the network hypersensitive in the same way large weights do. There is no reason to penalize them.</p>
+
+  <hr>
+
+  <h2>Step 7 — The Update Rule (Weight Decay)</h2>
+  <p><strong>Goal:</strong> substitute the new $dW^{[l]}_{\text{L2}}$ into gradient descent and simplify to its final form.</p>
+
+  <p><strong>7.1 — Start from the standard gradient descent update:</strong></p>
+  $$W^{[l]} \leftarrow W^{[l]} - \alpha \cdot dW^{[l]}_{\text{L2}}$$
+
+  <p><strong>7.2 — Substitute $dW^{[l]}_{\text{L2}}$ from Step 6.4:</strong></p>
+  $$W^{[l]} \leftarrow W^{[l]} - \alpha \left( \frac{1}{m}\, dZ^{[l]} \cdot {A^{[l-1]}}^T + \frac{\lambda}{m} W^{[l]} \right)$$
+
+  <p><strong>7.3 — Distribute $\alpha$ across both terms:</strong></p>
+  $$W^{[l]} \leftarrow W^{[l]} - \frac{\alpha}{m}\, dZ^{[l]} \cdot {A^{[l-1]}}^T - \frac{\alpha\lambda}{m} W^{[l]}$$
+
+  <p><strong>7.4 — Group the $W^{[l]}$ terms on the right:</strong></p>
+  $$W^{[l]} \leftarrow W^{[l]} - \frac{\alpha\lambda}{m} W^{[l]} - \frac{\alpha}{m}\, dZ^{[l]} \cdot {A^{[l-1]}}^T$$
+  $$W^{[l]} \leftarrow W^{[l]} \!\left(1 - \frac{\alpha\lambda}{m}\right) - \frac{\alpha}{m}\, dZ^{[l]} \cdot {A^{[l-1]}}^T$$
+
+  <p><strong>7.5 — Final form:</strong></p>
+  $$\boxed{W^{[l]} \leftarrow \underbrace{\left(1 - \frac{\alpha\lambda}{m}\right)}_{\text{shrink factor}} W^{[l]} - \frac{\alpha}{m}\, dZ^{[l]} \cdot {A^{[l-1]}}^T}$$
+
+  <p><strong>Reading the result:</strong></p>
+  <p>Every update now has two sequential effects on $W^{[l]}$:</p>
+  <ol>
+    <li><strong>Shrink</strong> — multiply $W^{[l]}$ by $\left(1 - \frac{\alpha\lambda}{m}\right)$, a number slightly less than 1. This pulls every weight toward zero unconditionally, on every single iteration.</li>
+    <li><strong>Gradient step</strong> — subtract the gradient term, exactly as in unregularized training.</li>
+  </ol>
+  <p>This is called <strong>weight decay</strong>. The engineers who discovered this trick wrote it as:</p>
+  <pre><code>W *= 0.99               # shrink
+W -= learning_rate * dW  # gradient step</code></pre>
+  <p>The statisticians who derived L2 regularization from the loss function arrived at the same formula through calculus. They are identical.</p>
+
+  <hr>
+
+  <h2>Summary</h2>
+  <table>
+    <thead><tr><th>Step</th><th>What was done</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Define the original loss</td><td>$J = -\frac{1}{m}\sum[y\log\hat{y} + (1-y)\log(1-\hat{y})]$</td></tr>
+      <tr><td>2</td><td>Build a penalty for large weights</td><td>$\text{penalty} = \sum_k W_k^2$</td></tr>
+      <tr><td>3</td><td>Scale the penalty</td><td>$\frac{\lambda}{2m}\sum_k W_k^2$</td></tr>
+      <tr><td>4</td><td>Extend to matrices (Frobenius norm)</td><td>$\frac{\lambda}{2m}\sum_l \|W^{[l]}\|_F^2$</td></tr>
+      <tr><td>5</td><td>Form the regularized cost</td><td>$J_{\text{L2}} = J + \frac{\lambda}{2m}\sum_l \|W^{[l]}\|_F^2$</td></tr>
+      <tr><td>6</td><td>Differentiate: new $dW^{[l]}$</td><td>$dW^{[l]}_{\text{L2}} = \frac{1}{m}dZ^{[l]}{A^{[l-1]}}^T + \frac{\lambda}{m}W^{[l]}$</td></tr>
+      <tr><td>7</td><td>Substitute into update rule</td><td>$W^{[l]} \leftarrow (1 - \frac{\alpha\lambda}{m})W^{[l]} - \frac{\alpha}{m}dZ^{[l]}{A^{[l-1]}}^T$</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═══════════════════════════════════════════ DROPOUT -->
+<section id="regularization_dropout">
+  <h1>Dropout</h1>
+  <p class="section-tag">Regularization / Dropout</p>
+
+  <hr>
+
+  <h2>Core Idea</h2>
+  <p>During training, randomly zero out neurons with probability $p$ so the network cannot rely on any specific neuron always being present. This forces distributed, redundant representations — each neuron must be independently useful. Only robust solutions survive training; fragile co-adapted solutions don't.</p>
+  <p>At test time, no neurons are dropped.</p>
+
+  <hr>
+
+  <h2>Forward Pass (Inverted Dropout)</h2>
+  <p>For layer $l$, generate a binary mask:</p>
+  $$R^{[l]} \sim \text{Bernoulli}(1 - p)$$
+  <p>Apply and scale:</p>
+  $$\tilde{A}^{[l]} = \frac{R^{[l]} \odot A^{[l]}}{1 - p}$$
+  <p>The $\frac{1}{1-p}$ scaling keeps the expected activation the same as test time — so no adjustment is needed at inference.</p>
+  <pre><code># Training
+mask = (np.random.rand(*A.shape) > p)
+A_dropped = (A * mask) / (1 - p)
+
+# Test time — use A directly, no changes</code></pre>
+
+  <hr>
+
+  <h2>Backward Pass</h2>
+  <p>Apply the same mask from the forward pass — gradients flow only through neurons that were kept.</p>
+
+  <hr>
+
+  <h2>Key Notes</h2>
+  <ul>
+    <li>Apply to hidden layers only, not input or output</li>
+    <li>Standard keep probability: 0.5 for hidden layers</li>
+    <li>Training loss will be noisy — expected. Watch test loss, not training loss</li>
+    <li>Dropout only during training, not at test/inference time</li>
+  </ul>
+</section>
+
+<!-- ═══════════════════════════════════════════ OPTIMIZATION -->
+<section id="optimization">
+  <h1>Optimization Algorithms</h1>
+
+  <hr>
+
+  <h2>Exponentially Weighted Average (EWA)</h2>
+  $$v_t = \beta \, v_{t-1} + (1 - \beta) \, \theta_t$$
+  <p><strong>Unrolled:</strong></p>
+  $$v_t = (1-\beta)\theta_t + (1-\beta)\beta\,\theta_{t-1} + (1-\beta)\beta^2\,\theta_{t-2} + \cdots$$
+  <table>
+    <thead><tr><th>Property</th><th>Value</th></tr></thead>
+    <tbody>
+      <tr><td>Weight of an observation $k$ steps back from the current step</td><td>$(1-\beta)\beta^k$</td></tr>
+      <tr><td>Weight of $\theta_{t-k}$</td><td>$(1-\beta)\beta^k$</td></tr>
+      <tr><td>Per-step Decay Ratio between consecutive observations</td><td>$\beta$</td></tr>
+      <tr><td>Effective window</td><td>$\approx \dfrac{1}{1-\beta}$</td></tr>
+      <tr><td>Initialize</td><td>$v_0 = 0$</td></tr>
+    </tbody>
+  </table>
+
+  <hr>
+
+  <h2>Bias Correction</h2>
+  <p>At step $t$, weights on real observations sum to $1 - \beta^t$, not 1. Corrected estimate:</p>
+  $$\hat{v}_t = \frac{v_t}{1 - \beta^t}$$
+  <p>As $t \to \infty$: $\beta^t \to 0$, correction $\to 1$.</p>
+
+  <hr>
+
+  <h2>Momentum (without Bias Correction)</h2>
+  <p>EWA applied to gradients.</p>
+  $$v_{dW} = \beta \, v_{dW} + (1 - \beta) \, dW$$
+  $$v_{db} = \beta \, v_{db} + (1 - \beta) \, db$$
+  <p>Update:</p>
+  $$W = W - \alpha \, v_{dW}$$
+  $$b = b - \alpha \, v_{db}$$
+  <p>Initialize: $v_{dW} = 0$, $v_{db} = 0$</p>
+  <p>Typical: $\beta = 0.9$</p>
+
+  <hr>
+
+  <h2>RMSprop (without Bias Correction)</h2>
+  <p>EWA applied to squared gradients.</p>
+  $$s_{dW} = \beta_2 \, s_{dW} + (1 - \beta_2) \, dW^2$$
+  $$s_{db} = \beta_2 \, s_{db} + (1 - \beta_2) \, db^2$$
+  <p>Update:</p>
+  $$W = W - \alpha \, \frac{dW}{\sqrt{s_{dW}} + \epsilon}$$
+  $$b = b - \alpha \, \frac{db}{\sqrt{s_{db}} + \epsilon}$$
+  <p>$dW^2$ is element-wise squaring. Division and square root are also element-wise.</p>
+  <p>Initialize: $s_{dW} = 0$, $s_{db} = 0$</p>
+  <p>Typical: $\epsilon = 10^{-8}$</p>
+
+  <hr>
+
+  <h2>Adam (Momentum + RMSprop + Bias Correction)</h2>
+  <p>First moment (momentum):</p>
+  $$v_{dW} = \beta_1 \, v_{dW} + (1 - \beta_1) \, dW$$
+  $$v_{db} = \beta_1 \, v_{db} + (1 - \beta_1) \, db$$
+  <p>Second moment (RMSprop):</p>
+  $$s_{dW} = \beta_2 \, s_{dW} + (1 - \beta_2) \, dW^2$$
+  $$s_{db} = \beta_2 \, s_{db} + (1 - \beta_2) \, db^2$$
+  <p>Bias correction:</p>
+  $$\hat{v}_{dW} = \frac{v_{dW}}{1 - \beta_1^t}, \quad \hat{v}_{db} = \frac{v_{db}}{1 - \beta_1^t}$$
+  $$\hat{s}_{dW} = \frac{s_{dW}}{1 - \beta_2^t}, \quad \hat{s}_{db} = \frac{s_{db}}{1 - \beta_2^t}$$
+  <p>Update:</p>
+  $$W = W - \alpha \, \frac{\hat{v}_{dW}}{\sqrt{\hat{s}_{dW}} + \epsilon}$$
+  $$b = b - \alpha \, \frac{\hat{v}_{db}}{\sqrt{\hat{s}_{db}} + \epsilon}$$
+  <p>Typical: $\beta_1 = 0.9$, $\beta_2 = 0.999$, $\epsilon = 10^{-8}$</p>
+
+  <hr>
+
+  <h2>Learning Rate Decay</h2>
+  $$\alpha = \frac{1}{1 + \text{decay rate} \times \text{epoch}} \cdot \alpha_0$$
+  <p>Other forms:</p>
+  $$\alpha = 0.95^{\text{epoch}} \cdot \alpha_0 \quad \text{(exponential decay)}$$
+  $$\alpha = \frac{k}{\sqrt{\text{epoch}}} \cdot \alpha_0$$
+</section>
+
+<!-- ═══════════════════════════════════════════ BATCH NORM -->
+<section id="batch_norm">
+  <h1>Batch Normalization</h1>
+
+  <hr>
+
+  <h2>Forward Pass</h2>
+  <p>Applied per layer, per neuron, across all $m$ examples in a mini-batch. Applied to $z$ (before activation function).</p>
+
+  <p><strong>Step 1 — Mean:</strong> $\displaystyle\mu = \frac{1}{m} \sum_{i=1}^{m} z^{(i)}$</p>
+  <p><strong>Step 2 — Variance:</strong> $\displaystyle\sigma^2 = \frac{1}{m} \sum_{i=1}^{m} (z^{(i)} - \mu)^2$</p>
+  <p><strong>Step 3 — Normalize:</strong> $\displaystyle\hat{z}^{(i)} = \frac{z^{(i)} - \mu}{\sqrt{\sigma^2 + \epsilon}}$</p>
+  <p><strong>Step 4 — Scale and shift:</strong> $\tilde{z}^{(i)} = \gamma \hat{z}^{(i)} + \beta$</p>
+
+  <p>$\gamma$ and $\beta$ are learnable parameters (per neuron), updated through backprop.</p>
+  <p>$\epsilon$ is a small constant (typically $10^{-8}$) to avoid division by zero.</p>
+  <p>Bias $b$ is dropped from the layer because batch norm subtracts the mean, which cancels $b$. The $\beta$ parameter replaces it.</p>
+  <p>Per-layer learnable parameters: $(W, \gamma, \beta)$ instead of $(W, b)$.</p>
+
+  <hr>
+
+  <h2>Why <em>b</em> Disappears</h2>
+  <p>We have $z^{(i)} = W a^{(i)} + b$. When batch norm subtracts the mean:</p>
+  $$\mu = \frac{1}{m}\sum(W a^{(i)} + b) = \frac{1}{m}\sum W a^{(i)} + b$$
+  <p>$b$ is a constant across all examples, so it passes straight through the average. Now subtract:</p>
+  $$z^{(i)} - \mu = (W a^{(i)} + b) - \left(\frac{1}{m}\sum W a^{(i)} + b\right)$$
+  <p>The $+b$ and $+b$ cancel. No matter what value $b$ has, subtracting the mean removes it. So there's no point learning $b$ when batch norm erases it.</p>
+  <p>Batch norm's $\beta$ in step 4 replaces $b$ — it adds a learnable shift after normalization, where it won't get cancelled.</p>
+
+  <hr>
+
+  <h2>Shorthand</h2>
+  $$s = \frac{1}{\sqrt{\sigma^2 + \epsilon}} = (\sigma^2 + \epsilon)^{-1/2}$$
+
+  <hr>
+
+  <h2>Computation Graph for Backward Pass</h2>
+  $$\gamma \hat{z}^{(i)} + \beta = \tilde{z}^{(i)}$$
+  $$g(\tilde{z}^{(i)}) = a^{(i)}$$
+  $$z^{(i)} \rightarrow \mu, \; \sigma^2 \rightarrow \hat{z}^{(i)} \rightarrow \gamma \hat{z}^{(i)} + \beta = \tilde{z}^{(i)} \rightarrow g(\tilde{z}^{(i)}) = a^{(i)} \rightarrow \mathcal{L}$$
+  <p>Intermediate variables (each one is a simple node):</p>
+  $$\mu = \frac{1}{m}\sum z^{(i)}$$
+  $$v = \sigma^2 = \frac{1}{m}\sum (z^{(i)} - \mu)^2$$
+  $$s = (v + \epsilon)^{-1/2}$$
+  $$\hat{z}^{(i)} = (z^{(i)} - \mu) \cdot s$$
+  $$\tilde{z}^{(i)} = \gamma \hat{z}^{(i)} + \beta$$
+
+  <hr>
+
+  <h2>Backward Pass</h2>
+
+  <h3>Step 1: Start from the loss</h3>
+  <p>We have $\frac{\partial \mathcal{L}}{\partial \tilde{z}^{(i)}} = d\tilde{z}^{(i)}$ from upstream.</p>
+  <p>For the output layer with sigmoid + binary cross entropy, this simplifies to $A_2^{(i)} - y^{(i)}$.</p>
+
+  <h3>Step 2: Gradient for $\gamma$</h3>
+  <p>$\gamma$ has no direct connection to loss. $\gamma$ affects $\tilde{z}$, and $\tilde{z}$ affects loss. So chain rule:</p>
+  $$\frac{\partial \mathcal{L}}{\partial \gamma} = \frac{\partial \mathcal{L}}{\partial \tilde{z}^{(i)}} \cdot \frac{\partial \tilde{z}^{(i)}}{\partial \gamma}$$
+  <p>We already have $\frac{\partial \mathcal{L}}{\partial \tilde{z}^{(i)}} = d\tilde{z}^{(i)}$ from Step 1.</p>
+  <p>Now find $\frac{\partial \tilde{z}^{(i)}}{\partial \gamma}$. From $\tilde{z}^{(i)} = \gamma \hat{z}^{(i)} + \beta$:</p>
+  $$\frac{\partial \tilde{z}^{(i)}}{\partial \gamma} = \hat{z}^{(i)}$$
+  <p>So for a single example: $\frac{\partial \mathcal{L}}{\partial \gamma} = d\tilde{z}^{(i)} \cdot \hat{z}^{(i)}$</p>
+  <p>But $\gamma$ is a single parameter shared across all $m$ examples. Each example contributes a gradient, so we sum:</p>
+  $$\frac{\partial \mathcal{L}}{\partial \gamma} = \sum_{i=1}^{m} d\tilde{z}^{(i)} \cdot \hat{z}^{(i)}$$
+
+  <h3>Step 3: Gradient for $\beta$</h3>
+  <p>Same logic. $\beta$ affects $\tilde{z}$, $\tilde{z}$ affects loss:</p>
+  $$\frac{\partial \mathcal{L}}{\partial \beta} = \frac{\partial \mathcal{L}}{\partial \tilde{z}^{(i)}} \cdot \frac{\partial \tilde{z}^{(i)}}{\partial \beta}$$
+  <p>From $\tilde{z}^{(i)} = \gamma \hat{z}^{(i)} + \beta$:</p>
+  $$\frac{\partial \tilde{z}^{(i)}}{\partial \beta} = 1$$
+  <p>So for a single example: $\frac{\partial \mathcal{L}}{\partial \beta} = d\tilde{z}^{(i)} \cdot 1 = d\tilde{z}^{(i)}$</p>
+  <p>Again $\beta$ is shared across all $m$ examples, so sum:</p>
+  $$\frac{\partial \mathcal{L}}{\partial \beta} = \sum_{i=1}^{m} d\tilde{z}^{(i)}$$
+
+  <h3>Step 4: Gradient for $\hat{z}^{(i)}$</h3>
+  <p>$\hat{z}$ affects $\tilde{z}$, $\tilde{z}$ affects loss:</p>
+  $$\frac{\partial \mathcal{L}}{\partial \hat{z}^{(i)}} = \frac{\partial \mathcal{L}}{\partial \tilde{z}^{(i)}} \cdot \frac{\partial \tilde{z}^{(i)}}{\partial \hat{z}^{(i)}}$$
+  <p>From $\tilde{z}^{(i)} = \gamma \hat{z}^{(i)} + \beta$:</p>
+  $$\frac{\partial \tilde{z}^{(i)}}{\partial \hat{z}^{(i)}} = \gamma$$
+  <p>Multiply:</p>
+  $$\frac{\partial \mathcal{L}}{\partial \hat{z}^{(i)}} = d\tilde{z}^{(i)} \cdot \gamma$$
+
+  <h3>Step 5: Gradient $d\hat{z}/dz$ — the hard part</h3>
+  <p>We need $\frac{\partial \mathcal{L}}{\partial z^{(i)}}$. Loss has no direct connection to $z^{(i)}$ — it goes through $\hat{z}^{(i)}$. So chain rule:</p>
+  $$\frac{\partial \mathcal{L}}{\partial z^{(i)}} = \frac{\partial \mathcal{L}}{\partial \hat{z}^{(i)}} \cdot \frac{\partial \hat{z}^{(i)}}{\partial z^{(i)}}$$
+  <p>We already have $\frac{\partial \mathcal{L}}{\partial \hat{z}^{(i)}} = d\tilde{z}^{(i)} \cdot \gamma$ from Step 4.</p>
+  <p>Now we need $\frac{\partial \hat{z}^{(i)}}{\partial z^{(i)}}$. Look at the equation:</p>
+  $$\hat{z}^{(i)} = (z^{(i)} - \mu) \cdot s$$
+  <p>$z^{(i)}$ affects $\hat{z}^{(i)}$ through <strong>three paths</strong> because $z^{(i)}$ appears:</p>
+  <ol>
+    <li>Directly in $(z^{(i)} - \mu)$</li>
+    <li>Inside $\mu = \frac{1}{m}\sum z^{(j)}$</li>
+    <li>Inside $v = \frac{1}{m}\sum(z^{(j)} - \mu)^2$, which feeds into $s$</li>
+  </ol>
+
+  <h4>Path 1 — Direct</h4>
+  <p>Freeze $\mu$ and $s$ as constants.</p>
+  <p>$\hat{z}^{(i)} = s \cdot z^{(i)} - s \cdot \mu$</p>
+  $$\frac{\partial \hat{z}^{(i)}}{\partial z^{(i)}} = s$$
+
+  <h4>Path 2 — Through $\mu$</h4>
+  <p><strong>Link 1:</strong> How does $z^{(i)}$ affect $\mu$?</p>
+  $$\mu = \frac{1}{m}\sum z^{(j)} \implies \frac{\partial \mu}{\partial z^{(i)}} = \frac{1}{m}$$
+  <p><strong>Link 2:</strong> How does $\mu$ affect $\hat{z}^{(i)}$?</p>
+  <p>$\hat{z}^{(i)} = (z^{(i)} - \mu) \cdot s$, so $\mu$ is subtracted:</p>
+  $$\frac{\partial \hat{z}^{(i)}}{\partial \mu} = -s$$
+  <p><strong>Chaining Link 1 and Link 2:</strong></p>
+  $$\frac{\partial \hat{z}^{(i)}}{\partial z^{(i)}} \bigg|_{\text{path 2}} = \frac{\partial \hat{z}^{(i)}}{\partial \mu} \cdot \frac{\partial \mu}{\partial z^{(i)}} = (-s) \cdot \frac{1}{m} = -\frac{s}{m}$$
+
+  <h4>Path 3 — Through $v$ through $s$</h4>
+  <p>Three links in the chain:</p>
+  <p><strong>Link 1:</strong> How does $z^{(i)}$ affect $v$? (with $\mu$ frozen — its dependency is handled by path 2)</p>
+  $$v = \frac{1}{m}\sum(z^{(j)} - \mu)^2$$
+  <p>Only the $j = i$ term contains $z^{(i)}$. Power rule:</p>
+  $$\frac{\partial v}{\partial z^{(i)}} = \frac{1}{m} \cdot 2(z^{(i)} - \mu) = \frac{2}{m}(z^{(i)} - \mu)$$
+  <p><strong>Link 2:</strong> How does $v$ affect $s$?</p>
+  $$s = (v + \epsilon)^{-1/2}$$
+  <p>Power rule:</p>
+  $$\frac{\partial s}{\partial v} = -\frac{1}{2}(v + \epsilon)^{-3/2}$$
+  <p><strong>Link 3:</strong> How does $s$ affect $\hat{z}^{(i)}$?</p>
+  <p>$\hat{z}^{(i)} = (z^{(i)} - \mu) \cdot s$. With everything except $s$ frozen:</p>
+  $$\frac{\partial \hat{z}^{(i)}}{\partial s} = (z^{(i)} - \mu)$$
+  <p><strong>Chaining Link 1, Link 2, and Link 3:</strong></p>
+  $$\frac{\partial \hat{z}^{(i)}}{\partial z^{(i)}} \bigg|_{\text{path 3}} = \frac{\partial \hat{z}^{(i)}}{\partial s} \cdot \frac{\partial s}{\partial v} \cdot \frac{\partial v}{\partial z^{(i)}} = (z^{(i)} - \mu) \cdot \left(-\frac{1}{2}\right)(v + \epsilon)^{-3/2} \cdot \frac{2}{m}(z^{(i)} - \mu)$$
+  <p>The 2 and $\frac{1}{2}$ cancel:</p>
+  $$= -\frac{1}{m}(z^{(i)} - \mu)^2 (v + \epsilon)^{-3/2}$$
+
+  <h4>Sum all three paths</h4>
+  $$\frac{\partial \hat{z}^{(i)}}{\partial z^{(i)}} = \frac{\partial \hat{z}^{(i)}}{\partial z^{(i)}} \bigg|_{\text{path 1}} + \frac{\partial \hat{z}^{(i)}}{\partial z^{(i)}} \bigg|_{\text{path 2}} + \frac{\partial \hat{z}^{(i)}}{\partial z^{(i)}} \bigg|_{\text{path 3}}$$
+  $$= s + \left(-\frac{s}{m}\right) + \left(-\frac{1}{m}(z^{(i)} - \mu)^2 (v + \epsilon)^{-3/2}\right)$$
+  $$= s - \frac{s}{m} - \frac{1}{m}(z^{(i)} - \mu)^2 (v + \epsilon)^{-3/2}$$
+
+  <h3>Step 6: Full gradient $dL/dz$</h3>
+  $$\frac{\partial \mathcal{L}}{\partial z^{(i)}} = d\hat{z}^{(i)} \cdot \left(s - \frac{s}{m} - \frac{1}{m}(z^{(i)} - \mu)^2 (v + \epsilon)^{-3/2}\right)$$
+  <p>where $d\hat{z}^{(i)} = d\tilde{z}^{(i)} \cdot \gamma$</p>
+  <p>Same formula applies at every layer — only the upstream gradient and layer-specific $z$, $\mu$, $v$, $\gamma$ change.</p>
+
+  <hr>
+
+  <h2>Inference</h2>
+  <p>During training: $\mu$ and $\sigma^2$ come from the current mini-batch.</p>
+  <p>During inference: use running EWA of $\mu$ and $\sigma^2$ accumulated across mini-batches during training.</p>
+  $$\mu_{\text{running}} = \beta_{\text{bn}} \, \mu_{\text{running}} + (1 - \beta_{\text{bn}}) \, \mu_{\text{batch}}$$
+  $$\sigma^2_{\text{running}} = \beta_{\text{bn}} \, \sigma^2_{\text{running}} + (1 - \beta_{\text{bn}}) \, \sigma^2_{\text{batch}}$$
+  <p>At inference, normalize using $\mu_{\text{running}}$ and $\sigma^2_{\text{running}}$ instead of batch statistics.</p>
+</section>
+
+</main>
+
+<script>
+  // Sidebar collapse toggle
+  const sidebar = document.getElementById('sidebar');
+  const toggleBtn = document.getElementById('toggle-btn');
+  const collapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+
+  if (collapsed) sidebar.classList.add('collapsed');
+
+  toggleBtn.addEventListener('click', () => {
+    sidebar.classList.toggle('collapsed');
+    localStorage.setItem('sidebar-collapsed', sidebar.classList.contains('collapsed'));
+  });
+
+  // Active section tracking
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('#sidebar nav a');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`#sidebar nav a[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '0px 0px -55% 0px', threshold: 0 });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>
