@@ -8,27 +8,47 @@ Suppose average gradient is moving in +ve direction and suppose the next batch u
 
 EWA applied to gradients.
 
-$$v_{dW} = \beta \, v_{dW} + (1 - \beta) \, dW$$
+$$
+v_{dW} = \beta \, v_{dW} + (1 - \beta) \, dW
+$$
 
-$$v_{db} = \beta \, v_{db} + (1 - \beta) \, db$$
+$$
+v_{db} = \beta \, v_{db} + (1 - \beta) \, db
+$$
+
 Where $v_{dW}$ and $v_{db}$ are the running exponentially weighted averages of the gradients $dW$ and $db$ respectively.
 
 Example (with $\beta = 0.9$, $v_{dW_0}=0$):
-$$v_{dW_1} = 0.9 \, v_{dW_0} + 0.1 \, dW_{1}$$
-$$v_{dW_2} = 0.9 \, v_{dW_1} + 0.1 \, dW_{2}$$
-$$v_{dW_3} = 0.9 \, v_{dW_2} + 0.1 \, dW_{3}$$
+
+$$
+v_{dW_1} = 0.9 \, v_{dW_0} + 0.1 \, dW_{1}
+$$
+
+$$
+v_{dW_2} = 0.9 \, v_{dW_1} + 0.1 \, dW_{2}
+$$
+
+$$
+v_{dW_3} = 0.9 \, v_{dW_2} + 0.1 \, dW_{3}
+$$
 
 All the above equations result in:
 
-$$v_{dW_3} = 0.1 \, dW_{3} + 0.09 \, dW_{2} + 0.081 \, dW_{1}$$
+$$
+v_{dW_3} = 0.1 \, dW_{3} + 0.09 \, dW_{2} + 0.081 \, dW_{1}
+$$
 
 The weights will sum to $0.1 + 0.09 + 0.081 = 0.271$, which is less than $1$. This is because we are not considering the initial value of $v_{dW_0}$, which is $0$. The weights on the real observations sum to $1 - \beta^t$, not $1$.
 
 Update:
 
-$$W = W - \alpha \, v_{dW}$$
+$$
+W = W - \alpha \, v_{dW}
+$$
 
-$$b = b - \alpha \, v_{db}$$
+$$
+b = b - \alpha \, v_{db}
+$$
 
 Initialize: $v_{dW} = 0$, $v_{db} = 0$
 
