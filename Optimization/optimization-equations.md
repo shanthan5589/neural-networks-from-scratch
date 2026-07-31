@@ -34,11 +34,31 @@ As $t \to \infty$: $\beta^t \to 0$, correction $\to 1$.
 
 ## Momentum (without Bias Correction)
 
+Complete info: [Momentum and Bias Correction](./momentum_and_bias_correction.md)
+
+Refer: [Momentum based optimizers - GFG](https://www.geeksforgeeks.org/machine-learning/ml-momentum-based-gradient-optimizer-introduction/)
+
+The idea is we don't use simple average like $(w1 + w2 + w3)/3$ because in that case we are giving equal weight to all the previous gradients. Instead, we use exponentially weighted average which gives more weight to the recent gradients and less weight to the older gradients. 
+
+Suppose average gradient is moving in +ve direction and suppose the next batch unexpectedly produces the opposite gradient, -1, The model still moves in the original direction, but more slowly. If several subsequent gradients point the opposite way, the direction (velocity) will eventually reverse.
+
 EWA applied to gradients.
 
 $$v_{dW} = \beta \, v_{dW} + (1 - \beta) \, dW$$
 
 $$v_{db} = \beta \, v_{db} + (1 - \beta) \, db$$
+Where $v_{dW}$ and $v_{db}$ are the running exponentially weighted averages of the gradients $dW$ and $db$ respectively.
+
+Example (with $\beta = 0.9$, $v_{dW_0}=0$):
+$$v_{dW_1} = 0.9 \, v_{dW_0} + 0.1 \, dW_{0}$$
+$$v_{dW_2} = 0.9 \, v_{dW_1} + 0.1 \, dW_{1}$$
+$$v_{dW_3} = 0.9 \, v_{dW_2} + 0.1 \, dW_{2}$$
+
+All the above equations result in:
+
+$$v_{dW_3} = 0.1 \, dW_{2} + 0.09 \, dW_{1} + 0.081 \, dW_{0}$$
+
+The weights will sum to $0.1 + 0.09 + 0.081 = 0.271$, which is less than $1$. This is because we are not considering the initial value of $v_{dW_0}$, which is $0$. The weights on the real observations sum to $1 - \beta^t$, not $1$.
 
 Update:
 
